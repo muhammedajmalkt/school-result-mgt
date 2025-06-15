@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { Menu, X, LogOut, Users, BookOpen } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
@@ -66,8 +66,8 @@ const TeacherDashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex flex-row justify-center items-center min-h-screen min-w-screen z-50">
+        <div className="animate-spin rounded-full h-7 w-7 border-t-2 border-b-2 border-blue-500 "></div>
       </div>
     );
   }
@@ -141,10 +141,11 @@ const TeacherDashboard = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1">
+      {/* <div className="flex-1 p-8"> */}
         {clicked === 'class' && <ClassesView />}
         {clicked === 'exam' && <Exams />}
-      </div>
+        <Outlet/>
+      {/* </div> */}
     </div>
   );
 };

@@ -36,25 +36,24 @@ const Context = ({ children }) => {
             };
             
             setUser(userData);
-            setResult(userData);
-            sessionStorage.setItem('result', JSON.stringify(userData));
+            sessionStorage.setItem('user', JSON.stringify(userData));
           } else {
             // Not an admin, clear everything
             setUser(null);
-            setResult(null);
-            sessionStorage.removeItem('result');
+            // setResult(null);
+            sessionStorage.removeItem('user');
           }
         } catch (error) {
           console.error('Error checking admin status:', error);
           setUser(null);
           setResult(null);
-          sessionStorage.removeItem('result');
+          sessionStorage.removeItem('user');
         }
       } else {
         // User is not authenticated
         setUser(null);
         setResult(null);
-        sessionStorage.removeItem('result');
+        sessionStorage.removeItem('user');
       }
       setLoading(false);
     });
@@ -63,20 +62,20 @@ const Context = ({ children }) => {
   }, []);
 
   // Update sessionStorage when result changes
-  useEffect(() => {
-    if (result) {
-      sessionStorage.setItem('result', JSON.stringify(result));
-    } else {
-      sessionStorage.removeItem('result');
-    }
-  }, [result]);
+  // useEffect(() => {
+  //   if (result) {
+  //     sessionStorage.setItem('result', JSON.stringify(result));
+  //   } else {
+  //     sessionStorage.removeItem('result');
+  //   }
+  // }, [result]);
 
   const logout = async () => {
     try {
       await auth.signOut();
       setUser(null);
       setResult(null);
-      sessionStorage.removeItem('result');
+      sessionStorage.removeItem('user');
     } catch (error) {
       console.error('Logout error:', error);
     }

@@ -60,6 +60,7 @@ const AdminLogin = () => {
       }
 
       if (!adminDoc.exists() || adminDoc.data().role !== 'admin') {
+        
         await auth.signOut();
         setError('You are not authorized to log in as an admin.');
         toast.error('Access denied. Not an admin account.');

@@ -1,7 +1,7 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, Book, UserPlus, Users, Layers, LogOut, LayoutDashboard } from 'lucide-react';
+import { Menu, X, Book, UserPlus, Users, Layers, LogOut, LayoutDashboard, NotebookText } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../../Firebase/config';
 import Swal from 'sweetalert2';
@@ -31,6 +31,7 @@ const AdminLayout = () => {
     { name: 'Add Exams', path: 'add-exam', icon: <Book className="w-5 h-5" /> },
     { name: 'Add Teacher', path: 'add-teacher', icon: <UserPlus className="w-5 h-5" /> },
     { name: 'Add Students', path: 'add-students', icon: <Users className="w-5 h-5" /> },
+    { name: 'Class & Subject', path: 'class-subject', icon: <NotebookText className="w-5 h-5" /> },
     { name: 'Class & Section', path: 'class-section', icon: <Layers className="w-5 h-5" /> },
   ];
 

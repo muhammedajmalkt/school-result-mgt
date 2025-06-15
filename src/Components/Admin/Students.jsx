@@ -380,7 +380,7 @@ const Students = () => {
       toast.error('Section is required.');
       return;
     }
-    if (!rollNo.trim() || isNaN(rollNo) || rollNo <= 0) {
+    if ( isNaN(rollNo) || rollNo <= 0) {
       setError('Valid roll number is required.');
       toast.error('Valid roll number is required.');
       return;
@@ -763,7 +763,7 @@ const Students = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white">
-                    {filteredStudents.sort((a, b) => a.regNo.localeCompare(b.regNo)).map((student) => (
+                    {filteredStudents.sort((a, b) => a.regNo -(b.regNo)).map((student) => (
                       <tr key={student.id} className={`transition-colors border-b border-gray-100 ${editingId === student.id ? "bg-blue-50" : "hover:bg-gray-50"}`}>
                         {editingId === student.id ? (
                           <>

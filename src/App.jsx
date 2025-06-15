@@ -16,6 +16,7 @@ import AdminLayout from './Components/Admin/AdminLayout';
 import { Toaster } from 'sonner';
 import NotFound from './Components/NotFound/NotFound';
 import ProtectedRoute from './Components/ProtectedRoute';
+import ClassSubjectManagement from './Components/Admin/ClassSubjectMgt';
 
 function App() {
   return (
@@ -39,20 +40,20 @@ function App() {
               <Route path="add-teacher" element={<Teachers />} />
               <Route path="add-students" element={<Students />} />
               <Route path="class-section" element={<ClassSectionManagement />} />
+              <Route path="class-subject" element={<ClassSubjectManagement />} />
             </Route>
             
-            {/* Fixed: Separate routes for teacher dashboard and exam entry */}
-            <Route path="/teacher-dash" element={
-              <ProtectedRoute role="teacher">
-                <TeacherDashboard />
+            {/* <Route path="/teacher-dash" element={ <ProtectedRoute role="teacher">
+               <TeacherDashboard />
               </ProtectedRoute>
             } />
+            <Route path="/teacher-dash/exam-entry/:regNo/:className" element={ <ProtectedRoute role="teacher"> <ExamEntry /> </ProtectedRoute> } /> */}
+
+           <Route path="/teacher-dash" element={ <ProtectedRoute role="teacher"> <TeacherDashboard /> 
+           </ProtectedRoute> } >
+              <Route path="exam-entry/:regNo/:className" element={<ExamEntry />} />
+            </Route>
             
-            <Route path="/teacher-dash/exam-entry/:regNo" element={
-              <ProtectedRoute role="teacher">
-                <ExamEntry />
-              </ProtectedRoute>
-            } />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -14,8 +14,7 @@ const ProtectedRoute = ({ children, role }) => {
       
       if (user) {
         try {
-          // Use the correct collection name based on your database structure
-          const collectionName = role === 'teacher' ? 'teachers' : 'admin'; // Note: 'admin' not 'admins'
+          const collectionName = role === 'teacher' ? 'teachers' : 'admin'; 
           const docRef = doc(firestore, collectionName, user.uid);
           const docSnap = await getDoc(docRef);
           
@@ -39,7 +38,7 @@ const ProtectedRoute = ({ children, role }) => {
                 role: userData.role,
                 loginTime: new Date().toISOString()
               };
-              sessionStorage.setItem('result', JSON.stringify(userInfo));
+              sessionStorage.setItem('user', JSON.stringify(userInfo));
             }
           } else {
             console.log(`No ${role} document found for user:`, user.uid);
@@ -52,7 +51,7 @@ const ProtectedRoute = ({ children, role }) => {
       } else {
         console.log('No user authenticated');
         setIsAuthenticated(false);
-        sessionStorage.removeItem('result');
+        sessionStorage.removeItem('user');
       }
       
       setLoading(false);
@@ -66,7 +65,7 @@ const ProtectedRoute = ({ children, role }) => {
     return (
       <div className="flex justify-center items-center h-screen bg-gray-50">
         <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
           <p className="text-gray-600 text-sm">Verifying authentication...</p>
         </div>
       </div>

@@ -13,3 +13,4 @@ If you are developing a production application, we recommend using TypeScript wi
 # Exam-result
 # result
 # result-mgt
+# result-mgt

@@ -33,11 +33,12 @@ const TeacherLogin = () => {
       // Sign in
       const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
       const user = userCredential.user;
-
+      
       // Fetch user data
       const userDocRef = doc(firestore, 'teachers', user.uid); 
       const userDoc = await getDoc(userDocRef);
-
+      
+      console.log(userDoc.exists());
       if (!userDoc.exists()) {
         setError('Teacher account not found. Please contact support or sign up.');
         await signOut(auth);
