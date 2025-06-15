@@ -43,15 +43,10 @@ function App() {
               <Route path="class-subject" element={<ClassSubjectManagement />} />
             </Route>
             
-            {/* <Route path="/teacher-dash" element={ <ProtectedRoute role="teacher">
-               <TeacherDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/teacher-dash/exam-entry/:regNo/:className" element={ <ProtectedRoute role="teacher"> <ExamEntry /> </ProtectedRoute> } /> */}
 
-           <Route path="/teacher-dash" element={ <ProtectedRoute role="teacher"> <TeacherDashboard /> 
+          <Route path="/teacher-dash" element={ <ProtectedRoute role="teacher"> <TeacherDashboard /> 
            </ProtectedRoute> } >
-              <Route path="exam-entry/:regNo/:className" element={<ExamEntry />} />
+              <Route path="exam-entry/:regNo/:className/:stream?" element={<ExamEntry />} />
             </Route>
             
             
