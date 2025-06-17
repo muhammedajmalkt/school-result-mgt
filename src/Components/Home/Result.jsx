@@ -23,19 +23,20 @@ const Result = () => {
     if (score >= 2.5) return 'C+';
     if (score >= 2.0) return 'C';
     if (score >= 1.5) return 'D';
-    return 'F';
+    if (score < 1.5) return 'F';
+    return 'AB';
   };
 
   // Updated percentage calculation for marks out of 5
   const calculatePercentage = (marks) => {
-    const totalMarks = marks.reduce((sum, subject) => sum + subject.score, 0);
+    const totalMarks = marks.reduce((sum, {score}) => score > 0 ? sum + score :sum , 0);
     const maxMarks = marks.length * 5;
-    return ((totalMarks / maxMarks) * 100).toFixed(2);
+    return ((totalMarks / maxMarks) * 100).toFixed(1);
   };
 
   // Check if student has failed in any subject (grade F or D)
-  const hasFailedSubject = (marks) => {
-    return marks.some(subject => subject.score < 2.0); // Fail if any subject score is below 2.0
+  const hasFailedSubject = (marks) => {    
+    return marks.score == "AB" || marks.score < 1.5 ? false : true
   };
 
   const enhancedResult = result
@@ -49,13 +50,14 @@ const Result = () => {
           grade: getGrade(subject.score),
         })),
         percentage: calculatePercentage(result.marks),
-        total: result.marks.reduce((sum, subject) => sum + subject.score, 0),
+        total: result.marks.reduce((sum, subject) => subject.score >0 ? sum + subject.score : sum, 0),
         maxTotal: result.marks.length * 5,
-        grade: getGrade(result.marks.reduce((sum, subject) => sum + subject.score, 0) / result.marks.length),
+        grade: result.marks.some(subject => subject.score === "AB" || (typeof subject.score === "number" && subject.score < 1.5))
+          ? "F" : getGrade( result.marks.reduce( (sum, subject) => typeof subject.score === "number" && subject.score > 0 ? sum + subject.score : sum, 0 ) / result.marks.length ),
         status: hasFailedSubject(result.marks) ? 'Fail' : 'Pass',
         resultStatus: hasFailedSubject(result.marks) ? 'NOT ELIGIBLE FOR HIGHER STUDIES' : 'ELIGIBLE FOR HIGHER STUDIES',
-      }
-    : null;
+      } : null;
+// console.log(enhancedResult);
 
   const getGradeColor = (grade) => {
     switch (grade) {
@@ -81,7 +83,7 @@ const Result = () => {
   {enhancedResult && (
     <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl border border-gray-100">
       {/* Header with School Branding */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-t-xl px-6 py-6">
+      <div className="bg-gradient-to-r from-eblue-600 to-purplee-600 bg-teal-600 rounded-t-xl px-6 py-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md">
@@ -217,7 +219,7 @@ const Result = () => {
               sessionStorage.removeItem("result");
               navigate('/');
             }}
-            className="flex-1  h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-md flex items-center justify-center gap-2"
+            className="w-full sm:w-1/2 sm:h-12 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-md flex items-center justify-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
             Check Another Result

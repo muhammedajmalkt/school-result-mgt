@@ -27,21 +27,26 @@ const ClassesView = () => {
 
           const teacherData = teacherSnapshot.docs[0].data();
           const { className, section } = teacherData;
+          console.log(section);
+          
 
           // Check if class has stream from exams collection
           const examsQuery = query(
             collection(firestore, 'exams'),
-            where('className', '==', className)
+            where('className', '==', className),
+            where('stream' , '==' ,section.toLowerCase())
           );
           const examsSnapshot = await getDocs(examsQuery);
           let isStream = false;
           let stream = null;
 
+
           if (!examsSnapshot.empty) {
-            const examData = examsSnapshot.docs[0].data();
+            const examData = examsSnapshot.docs[0].data();            
             isStream = examData.isStream || false;
             stream = isStream ? examData.stream : null;
           }
+            
 
           const studentsQuery = query(
             collection(firestore, 'students'),
@@ -49,7 +54,8 @@ const ClassesView = () => {
             where('section', '==', section)
           );
           const studentsSnapshot = await getDocs(studentsQuery);
-
+          
+          
           const students = studentsSnapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
@@ -68,7 +74,6 @@ const ClassesView = () => {
               regNo: student.regNo,
             })),
           };
-
           setAssignedClasses([classData]);
           setLoading(false);
         } catch (err) {
@@ -100,9 +105,10 @@ const ClassesView = () => {
       </div>
     );
   }
+console.log(assignedClasses);
 
   return (
-    <div className="ml-0 lg:ml-64 pt-28 p-8 w-full mx-auto">
+    <div className="ml-0 lg:ml-64 pt-28 p-8 w-full mx-auto overflow-hidden ">
       {assignedClasses.length === 0 ? (
         <p className="text-gray-500">No classes assigned to you.</p>
       ) : (
@@ -134,8 +140,8 @@ const ClassesView = () => {
             {cls.students.length === 0 ? (
               <p className="text-gray-500">No students in this class.</p>
             ) : (
-              <div className="overflow-x-auto rounded-lg">
-                <table className="min-w-full bg-parchment-50 rounded-lg border border-[#3D4577]">
+              <div className="rounded-lg h-[73vh] overflow-y-scroll scrollbar-hidden">
+                <table className="min-w-full bg-parchment-50 rounded-lg border border-[#3D4577]  ">
                   <thead>
                     <tr
                       className="bg-[#3D4577] text-cyan-50 font-medium text-base tracking-wide"
@@ -156,9 +162,7 @@ const ClassesView = () => {
                         <td className="p-4 border-b border-r border-[#3D4577]">{student.rollNo}</td>
                         <td className="p-4 border-b border-r border-[#3D4577]">{student.name}</td>
                         <td className="p-4 border-b border-r border-[#3D4577]">{student.regNo}</td>
-                        <td className="p-4 border-b border-[#3D4577]">
-                         { console.log(cls.isStream)}
-                          
+                        <td className="p-4 border-b border-[#3D4577]">                          
                           <Link
                             to={`exam-entry/${student.regNo}/${cls.className}${cls.isStream ? `/${cls.stream}` : ''}`}
                             className="text-[#3D4577] hover:text-blue-900 font-medium tracking-wide underline decoration-1 decoration-[#3D4577] hover:decoration-blue-950 transition-all duration-200"

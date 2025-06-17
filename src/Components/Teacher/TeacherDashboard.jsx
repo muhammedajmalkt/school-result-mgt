@@ -77,9 +77,9 @@ const TeacherDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="h-screen flex overflow-hidden ">
       {/* Header */}
-      <div className="fixed w-full top-0 z-10">
+      <div className="fixed w-full top-0 z-10  overflow-hidden ">
         <header className="bg-white p-4 flex items-center justify-between border-b border-gray-300">
           <button onClick={toggleSidebar} className="lg:hidden">
             <Menu className="w-6 h-6 text-gray-600" />
@@ -96,7 +96,7 @@ const TeacherDashboard = () => {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-50 transition-transform border-t border-r border-gray-300 top-[74px] ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-50 transition-transform border-t border-r border-gray-300 top-[74px]  ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0 transition-transform duration-500 ease-in-out`}
       >
@@ -141,7 +141,7 @@ const TeacherDashboard = () => {
       </div>
 
       {/* Main Content */}
-      {/* <div className="flex-1 p-8"> */}
+      {/* <div className="flex-1 p-8 overflow"> */}
         {clicked === 'class' && <ClassesView />}
         {clicked === 'exam' && <Exams />}
         <Outlet/>

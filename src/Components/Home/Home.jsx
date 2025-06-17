@@ -278,6 +278,7 @@ const Home = () => {
       }
 
       const studentData = student.data();
+      
 
       const examMarksQuery = query(
         collection(firestore, 'examMarks'),
@@ -295,10 +296,14 @@ const Home = () => {
 
       const examMarksData = examMarksSnapshot.docs[0].data();
       const marks = examMarksData.subjects || [];
+      
       // Adjust maxMarks based on score range (0-5 as per ExamEntry)
       const maxMarks = marks.length * 5; 
-      const total = marks.reduce((sum, subject) => sum + (subject.score || 0), 0);
+      const total = marks.reduce((sum, { score }) => score > 0 ? sum + score : sum, 0);
+
       const percentage = maxMarks > 0 ? (total / maxMarks) * 100 : 0;
+    
+
 
       const resultData = {
         studentName: studentData.name || studentData.studentName || 'Unknown',

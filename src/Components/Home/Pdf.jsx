@@ -47,7 +47,7 @@ const PDFDownloadButton = ({ enhancedResult }) => {
     doc.setFont('helvetica', 'normal');
     doc.text(`Registration No: ${enhancedResult.regNo}`, 20, 62);
     doc.text(`Name: ${enhancedResult.studentName.toUpperCase()}`, 20, 70);
-    doc.text(`Sex: ${enhancedResult.sex}`, 20, 78);
+    doc.text(`Sex: ${enhancedResult.gender}`, 20, 78);
     doc.text(`School: ${enhancedResult.school}`, 20, 86);
     doc.text(`Examination: ${enhancedResult.examName}`, 20, 94);
     doc.text(`Date: ${enhancedResult.examData?.date ? new Date(enhancedResult.examData.date).toLocaleDateString() : 'N/A'}`, 20, 102);
