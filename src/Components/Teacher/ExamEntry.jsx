@@ -10,6 +10,7 @@ import Swal from 'sweetalert2';
 const ExamEntry = () => {
   const { regNo, className, stream } = useParams();
   const navigate = useNavigate();
+  
 
   const [selectedExam, setSelectedExam] = useState('');
   const [availableExams, setAvailableExams] = useState([]);
@@ -28,7 +29,7 @@ const ExamEntry = () => {
   // Define optional subjects for each stream
   const optionalSubjects = {
     humanities: ["h1","h2","h3","h4"],
-    science: ["s1","s2","s3","s3"]
+    science: ["s1","s2","s3","s4"]
   };
 
   // Helper function to determine if className is +1 or +2
