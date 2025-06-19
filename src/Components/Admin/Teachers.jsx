@@ -305,11 +305,13 @@ const Teachers = () => {
       }
     }
   };
+  console.log(teachers);
+  
 
   return (
     <div className="space-y-6">
       {/* Add Teacher Form */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-300 p-6 animate-in slide-in-from-right duration-500">
+      <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-300 p-6 ">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">Add Teacher</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -498,7 +500,7 @@ const Teachers = () => {
                           <td className="p-3 text-gray-600">{teacher.email}</td>
                           <td className="p-3">{teacher.className}</td>
                           <td className="p-3">{teacher.section}</td>
-                          <td className="p-3 text-gray-500">{teacher.createdAt}</td>
+                          <td className="p-3 text-gray-500">{teacher.createdAt?.split(',')[0]}</td>
                           <td className="p-3">
                             <div className="flex gap-2">
                               <button

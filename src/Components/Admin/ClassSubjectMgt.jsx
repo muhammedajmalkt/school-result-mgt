@@ -1,9 +1,15 @@
+
+
+
 import React, { useState, useEffect } from 'react';
 import { ChevronUp, ChevronDown, Trash2, Edit, Save, Check, X } from 'lucide-react';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { firestore } from '../../Firebase/config';
 import Swal from 'sweetalert2';
 import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "../ui/select";
+
+
 
 const SubjectManagement = () => {
   const [allSubjects, setAllSubjects] = useState([]);
@@ -29,6 +35,8 @@ const SubjectManagement = () => {
           id: doc.id,
           name: doc.data().name
         }));
+        console.log(subjectsData);
+        
         setAllSubjects(subjectsData.map(subject => subject.name));
 
         // Fetch class assignments
@@ -409,32 +417,49 @@ const SubjectManagement = () => {
         <div className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Select Class</label>
-            <select
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-              className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">Select a class</option>
-              <optgroup label="Primary (1-4)">
-                {[1, 2, 3, 4].map(i => (
-                  <option key={i} value={i}>Class {i}</option>
-                ))}
-              </optgroup>
-              <optgroup label="Middle (5-7)">
-                {[5, 6, 7].map(i => (
-                  <option key={i} value={i}>Class {i}</option>
-                ))}
-              </optgroup>
-              <optgroup label="Secondary (8-10)">
-                {[8, 9, 10].map(i => (
-                  <option key={i} value={i}>Class {i}</option>
-                ))}
-              </optgroup>
-              <optgroup label="Senior Secondary">
-                <option value="+1">Class +1</option>
-                <option value="+2">Class +2</option>
-              </optgroup>
-            </select>
+ <Select value={selectedClass} onValueChange={setSelectedClass}>
+      <SelectTrigger className="w-full h-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <SelectValue placeholder="Select a class" />
+      </SelectTrigger>
+      <SelectContent className="w-full">
+        {/* Group: Primary */}
+        <SelectItem disabled className=" px-3 py-1 text-sm text-gray-500  cursor-default">
+          Primary (1–4)
+        </SelectItem>
+        {[1, 2, 3, 4].map((i) => (
+          <SelectItem key={i} value={i.toString()}>
+            Class {i}
+          </SelectItem>
+        ))}
+
+        {/* Group: Middle */}
+        <SelectItem disabled className=" text-gray-500 px-3 py-1 text-sm  cursor-default mt-2">
+          Middle (5–7)
+        </SelectItem>
+        {[5, 6, 7].map((i) => (
+          <SelectItem key={i} value={i.toString()}>
+            Class {i}
+          </SelectItem>
+        ))}
+
+        {/* Group: Secondary */}
+        <SelectItem disabled className=" px-3 py-1 text-sm text-gray-500 cursor-default mt-2">
+          Secondary (8–10)
+        </SelectItem>
+        {[8, 9, 10].map((i) => (
+          <SelectItem key={i} value={i.toString()}>
+            Class {i}
+          </SelectItem>
+        ))}
+
+        {/* Group: Senior Secondary */}
+        <SelectItem disabled className=" px-3 py-1 text-sm text-gray-500  cursor-default mt-2">
+          Senior Secondary
+        </SelectItem>
+        <SelectItem value="+1">Class +1</SelectItem>
+        <SelectItem value="+2">Class +2</SelectItem>
+      </SelectContent>
+    </Select>
           </div>
 
           {selectedClass && (

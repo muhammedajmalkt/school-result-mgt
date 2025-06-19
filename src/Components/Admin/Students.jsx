@@ -43,7 +43,11 @@ const Students = () => {
     const fetchData = async () => {
       try {
         const studentsSnapshot = await getDocs(collection(firestore, 'students'));
-        const studentsData = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const studentsData = studentsSnapshot.docs.map(doc => ({ 
+          id: doc.id, 
+          ...doc.data(),
+          gender: doc.data().gender.toLowerCase() // Ensure gender is lowercase
+        }));
         setStudents(studentsData);
 
         const classesSnapshot = await getDocs(collection(firestore, 'classes'));
@@ -157,13 +161,18 @@ const Students = () => {
       const docRef = await addDoc(collection(firestore, 'students'), {
         name: name.trim(),
         regNo: regNo.trim(),
-        gender: gender.trim(),
+        gender: gender.trim().toLowerCase(), // Store gender in lowercase
         className: className.trim(),
         section: section.trim(),
         rollNo: parseInt(rollNo)
       });
 
-      setStudents(prev => [...prev, { id: docRef.id, ...student, rollNo: parseInt(rollNo) }]);
+      setStudents(prev => [...prev, { 
+        id: docRef.id, 
+        ...student, 
+        rollNo: parseInt(rollNo),
+        gender: gender.toLowerCase() // Ensure lowercase in local state
+      }]);
       setSuccess('Student added successfully!');
       toast.success('Student added successfully!');
       setError('');
@@ -214,7 +223,7 @@ const Students = () => {
               .map((row, index) => {
                 const name = row.name?.toString().trim();
                 const regNo = row.regNo?.toString().trim();
-                const gender = row.gender?.toString().trim();
+                const gender = row.gender?.toString().trim().toLowerCase();
                 const className = row.className?.toString().trim();
                 const section = row.section?.toString().trim().toUpperCase();
                 const rollNo = parseInt(row.rollNo);
@@ -230,7 +239,7 @@ const Students = () => {
                   isValid:
                     !!name && name.length >= 3 &&
                     !!regNo &&
-                    !!gender && ['Male', 'Female'].includes(gender) &&
+                    !!gender && ['male', 'female'].includes(gender) &&
                     !!className &&
                     !!section &&
                     !isNaN(rollNo) && rollNo > 0
@@ -340,7 +349,7 @@ const Students = () => {
     setEditFormData({
       name: student.name,
       regNo: student.regNo,
-      gender: student.gender,
+      gender: student.gender.charAt(0).toUpperCase() + student.gender.slice(1), // Display capitalized
       className: student.className,
       section: student.section,
       rollNo: student.rollNo,
@@ -380,7 +389,7 @@ const Students = () => {
       toast.error('Section is required.');
       return;
     }
-    if ( isNaN(rollNo) || rollNo <= 0) {
+    if (isNaN(rollNo) || rollNo <= 0) {
       setError('Valid roll number is required.');
       toast.error('Valid roll number is required.');
       return;
@@ -404,14 +413,19 @@ const Students = () => {
       await updateDoc(doc(firestore, 'students', editingId), {
         name: name.trim(),
         regNo: regNo.trim(),
-        gender: gender.trim(),
+        gender: gender.trim().toLowerCase(), // Store in lowercase
         className: className.trim(),
         section: section.trim(),
         rollNo: parseInt(rollNo)
       });
 
       setStudents(students.map(student =>
-        student.id === editingId ? { ...student, ...editFormData, rollNo: parseInt(rollNo) } : student
+        student.id === editingId ? { 
+          ...student, 
+          ...editFormData, 
+          rollNo: parseInt(rollNo),
+          gender: gender.toLowerCase() // Ensure lowercase in local state
+        } : student
       ));
       setSuccess('Student updated successfully!');
       toast.success('Student updated successfully!');
@@ -457,9 +471,9 @@ const Students = () => {
   const generateSampleCSV = () => {
     const csvContent = "data:text/csv;charset=utf-8," +
       "name,regNo,gender,className,section,rollNo\n" +
-      "John Doe,REG001,Male,Class 1,A,1\n" +
-      "Jane Smith,REG002,Female,Class 1,B,2\n" +
-      "Bob Johnson,REG003,Male,Class 2,A,1";
+      "John Doe,REG001,male,1,A,1\n" +
+      "Jane Smith,REG002,female,1,B,2\n" +
+      "Bob Johnson,REG003,male,2,A,1";
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -763,7 +777,7 @@ const Students = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white">
-                    {filteredStudents.sort((a, b) => a.regNo -(b.regNo)).map((student) => (
+                    {filteredStudents.sort((a, b) => a.regNo - (b.regNo)).map((student) => (
                       <tr key={student.id} className={`transition-colors border-b border-gray-100 ${editingId === student.id ? "bg-blue-50" : "hover:bg-gray-50"}`}>
                         {editingId === student.id ? (
                           <>
@@ -867,7 +881,7 @@ const Students = () => {
                             <td className="px-4 py-3 font-medium text-gray-900">{student.name}</td>
                             <td className="px-4 py-3">
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800">
-                                {student.gender}
+                                {student.gender.charAt(0).toUpperCase() + student.gender.slice(1)}
                               </span>
                             </td>
                             <td className="px-4 py-3">

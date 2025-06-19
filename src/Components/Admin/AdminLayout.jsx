@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, Book, UserPlus, Users, Layers, LogOut, LayoutDashboard, NotebookText } from 'lucide-react';
@@ -9,6 +9,10 @@ import Swal from 'sweetalert2';
 const AdminLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAdminAuthenticated, setAdminAuthenticated] = useState(null);
+  const {pathname} = useLocation()
+  let pathName =pathname.split("/")
+  let pathLocation = pathName[pathName.length-1]
+    
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,7 +31,7 @@ const AdminLayout = () => {
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   const menuItems = [
-    { name: 'Dashboard', path: '', icon: <LayoutDashboard className="w-5 h-5" /> },
+    { name: 'Dashboard', path: 'dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
     { name: 'Add Exams', path: 'add-exam', icon: <Book className="w-5 h-5" /> },
     { name: 'Add Teacher', path: 'add-teacher', icon: <UserPlus className="w-5 h-5" /> },
     { name: 'Add Students', path: 'add-students', icon: <Users className="w-5 h-5" /> },
@@ -51,8 +55,8 @@ const handleLogout = async () => {
     if (result.isConfirmed) {
       await signOut(auth);
       setAdminAuthenticated(false);
-   Swal.fire({ title: 'Logged Out!', text: 'You have been successfully logged out.', icon: 'success', timer:2000})
-      .then(() => { navigate('/admin'); }); }
+      navigate('/admin')
+  }
   } catch (error) {
     Swal.fire( 'Error!', `Logout failed: ${error.message}`, 'error' );
     console.error('Logout failed:', error.message);
@@ -104,13 +108,15 @@ const handleLogout = async () => {
           <div className="mt-4">
             {menuItems.map((item) => (
               <Link
-                key={item.name}
-                to={item.path}
-                className="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+              key={item.name}
+              to={item.path}
+              className="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                 onClick={() => setIsSidebarOpen(false)}
               >
-                {item.icon}
-                <span className="ml-3">{item.name}</span>
+                <div className={`flex pl-2 ${pathLocation == item.path ? "border-[#3D4577] border-l-4 ":"border-gray-50 border-l-4"}`}>
+                  {item.icon}
+                  <span className="ml-3">{item.name}</span>
+                </div>
               </Link>
             ))}
           </div>

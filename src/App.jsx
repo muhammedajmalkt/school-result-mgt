@@ -36,6 +36,7 @@ function App() {
               </ProtectedRoute>
             }>
               <Route index element={<Dashboard />} />
+              <Route path="dashboard" element={<Dashboard />} />
               <Route path="add-exam" element={<AddExams />} />
               <Route path="add-teacher" element={<Teachers />} />
               <Route path="add-students" element={<Students />} />

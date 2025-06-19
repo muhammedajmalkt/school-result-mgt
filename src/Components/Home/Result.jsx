@@ -35,9 +35,13 @@ const Result = () => {
   };
 
   // Check if student has failed in any subject (grade F or D)
-  const hasFailedSubject = (marks) => {    
-    return marks.score == "AB" || marks.score < 1.5 ? false : true
-  };
+  // const hasFailedSubject = (marks) => {    
+  //   return marks.score == "AB" || marks.score < 1.5 ? false : true
+  // };
+  const hasFailedSubject = (marksArray) => {
+  return marksArray.some(mark => mark.score === "AB" || mark.score < 1.5);
+};
+
 
   const enhancedResult = result
     ? {
@@ -57,7 +61,7 @@ const Result = () => {
         status: hasFailedSubject(result.marks) ? 'Fail' : 'Pass',
         resultStatus: hasFailedSubject(result.marks) ? 'NOT ELIGIBLE FOR HIGHER STUDIES' : 'ELIGIBLE FOR HIGHER STUDIES',
       } : null;
-// console.log(enhancedResult);
+console.log(enhancedResult);
 
   const getGradeColor = (grade) => {
     switch (grade) {
@@ -81,26 +85,23 @@ const Result = () => {
   return (
    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-2">
   {enhancedResult && (
-    <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl border border-gray-100">
+    <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl border border-gray-100">
       {/* Header with School Branding */}
-      <div className="bg-gradient-to-r from-eblue-600 to-purplee-600 bg-teal-600 rounded-t-xl px-6 py-6">
+      <div className="bg-gradient-to-r from-eblue-600 to-purplee-600 bg-teal-600 rounded-t-lg px-6 py-5 flex justify-center items-center">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md">
-              <GraduationCap className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-white rounded-full lg:flex items-center justify-center shadow-md hidden">
+              <img src="/Yaseen Logo.png" alt="school-logo"  className=""/>
             </div>
-            <div className="text-white">
+            <div className="text-white ">
               <h1 className="text-xl font-bold">{enhancedResult.school}</h1>
             </div>
-          </div>
-          <div className="text-right text-white text-sm">
-            <p>2024-2025</p>
           </div>
         </div>
       </div>
 
       {/* Examination Details */}
-      <div className="bg-gray-50 px-6 py-3 border-b">
+      <div className="bg-gray-50 px-6 py-4 border-b">
         <div className="flex items-center justify-center space-x-4 text-gray-700">
           <div className="flex items-center space-x-2">
             <Award className="w-4 h-4 text-blue-600" />
@@ -114,7 +115,7 @@ const Result = () => {
         </div>
       </div>
 
-      <div className="px-6 py-4 space-y-4">
+      <div className="px-6 py-8 space-y-4 ">
         {/* Student Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">

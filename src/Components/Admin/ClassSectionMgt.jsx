@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Save, Edit, Trash2, Check, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
-import { firestore } from '../../Firebase/config'; 
+import { firestore } from '../../Firebase/config';
 import { toast } from 'sonner';
 import Swal from 'sweetalert2';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "../ui/select";
+
 
 const ClassSectionManagement = () => {
   const [allSections, setAllSections] = useState([]);
@@ -13,7 +15,7 @@ const ClassSectionManagement = () => {
   const [selectedSections, setSelectedSections] = useState([]);
   const [savedClasses, setSavedClasses] = useState([]);
   const [editingId, setEditingId] = useState(null);
-  const [error, setError] = useState('' );
+  const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -44,13 +46,13 @@ const ClassSectionManagement = () => {
   }, []);
 
   const addSection = async (e) => {
-   e.preventDefault()
+    e.preventDefault()
     if (!newSection.trim()) {
       setError('Section name cannot be empty');
       toast('Section name cannot be empty')
       return;
     }
-    
+
     const section = newSection.trim().toUpperCase();
     if (allSections.includes(section)) {
       setError(`Section ${section} already exists`);
@@ -64,7 +66,7 @@ const ClassSectionManagement = () => {
         where('name', '==', section)
       );
       const querySnapshot = await getDocs(sectionQuery);
-      
+
       if (!querySnapshot.empty) {
         setError(`Section ${section} already exists in database`);
         toast(`Section ${section} already exists in database`)
@@ -72,7 +74,7 @@ const ClassSectionManagement = () => {
       }
 
       await addDoc(collection(firestore, 'sections'), { name: section });
-      
+
       setAllSections([...allSections, section]);
       setNewSection('');
       setError('');
@@ -91,7 +93,7 @@ const ClassSectionManagement = () => {
 
     if (isUsed) {
       setError(`Cannot remove section ${section} - it's assigned to classes`);
-      toast(`Cannot remove section ${section} - it's assigned to classes`,{style:{backgroundColor:"#cc5858" ,color :"white"}})
+      toast(`Cannot remove section ${section} - it's assigned to classes`, { style: { backgroundColor: "#cc5858", color: "white" } })
       setTimeout(() => setError(''), 3000);
       return;
     }
@@ -102,7 +104,7 @@ const ClassSectionManagement = () => {
         where('name', '==', section)
       );
       const querySnapshot = await getDocs(sectionQuery);
-      
+
       if (!querySnapshot.empty) {
         await deleteDoc(doc(firestore, 'sections', querySnapshot.docs[0].id));
       }
@@ -145,8 +147,8 @@ const ClassSectionManagement = () => {
     try {
       if (editingId) {
         await updateDoc(doc(firestore, 'classes', editingId), classData);
-        
-        setSavedClasses(savedClasses.map(cls => 
+
+        setSavedClasses(savedClasses.map(cls =>
           cls.id === editingId ? { ...cls, ...classData } : cls
         ));
         setSuccess('Class updated successfully');
@@ -156,24 +158,24 @@ const ClassSectionManagement = () => {
           where('name', '==', className)
         );
         const querySnapshot = await getDocs(classQuery);
-        
+
         if (!querySnapshot.empty) {
-          toast('This class already exists',{style:{backgroundColor:"#cc5858"  ,color :"white"}})
+          toast('This class already exists', { style: { backgroundColor: "#cc5858", color: "white" } })
           setError('This class already exists');
           return;
         }
-        
+
         const docRef = await addDoc(collection(firestore, 'classes'), classData);
-        
+
         setSavedClasses([...savedClasses, { id: docRef.id, ...classData }]);
         setSuccess('Class added successfully');
-        toast('Class added successfully',{style:{backgroundColor:"#308051", color:"white"}})
+        toast('Class added successfully', { style: { backgroundColor: "#308051", color: "white" } })
       }
 
       resetForm();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      toast('Failed to save class',{style:{backgroundColor:"#cc5858" , color:"white"}})
+      toast('Failed to save class', { style: { backgroundColor: "#cc5858", color: "white" } })
       setError('Failed to save class');
 
       console.error(err);
@@ -189,29 +191,29 @@ const ClassSectionManagement = () => {
     setSelectedSections([...cls.sections]);
     setEditingId(classId);
   };
-const deleteClass = async (classId) => {
-  const result = await Swal.fire({
-    title: 'Are you sure?',
-    text: 'Are you sure you want to delete this class?',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Yes, delete it!',
-    cancelButtonText: 'Cancel',
-  });
+  const deleteClass = async (classId) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this class?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel',
+    });
 
-  if (result.isConfirmed) {
-    try {
-      await deleteDoc(doc(firestore, 'classes', classId));
-      setSavedClasses(savedClasses.filter(cls => cls.id !== classId));
-      if (editingId === classId) resetForm();
-      setSuccess('Class deleted successfully');
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      setError('Failed to delete class');
-      console.error(err);
+    if (result.isConfirmed) {
+      try {
+        await deleteDoc(doc(firestore, 'classes', classId));
+        setSavedClasses(savedClasses.filter(cls => cls.id !== classId));
+        if (editingId === classId) resetForm();
+        setSuccess('Class deleted successfully');
+        setTimeout(() => setSuccess(''), 3000);
+      } catch (err) {
+        setError('Failed to delete class');
+        console.error(err);
+      }
     }
-  }
-};
+  };
 
   const resetForm = () => {
     setClassName('');
@@ -228,18 +230,18 @@ const deleteClass = async (classId) => {
     );
   }
   console.log(savedClasses);
-  
+
 
   return (
     <div className=" space-y-8 ">
 
-      
+
       {/* Section Management */}
       <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">
           Manage Sections
         </h2>
-        
+
         <div className="space-y-4">
           <form className="flex gap-2" onSubmit={addSection}>
             <input
@@ -248,10 +250,10 @@ const deleteClass = async (classId) => {
               onChange={(e) => setNewSection(e.target.value.toUpperCase())}
               placeholder="Add new section (e.g., F)"
               className="flex-1 h-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-blue-500 focus:border-blue-500"
-              // maxLength="1"
+            // maxLength="1"
             />
             <button
-            type='submit'
+              type='submit'
               // onClick={addSection}
               className="h-10 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center cursor-pointer"
             >
@@ -259,7 +261,7 @@ const deleteClass = async (classId) => {
             </button>
           </form>
 
-         
+
 
           <div className="border border-gray-200 rounded-md overflow-hidden">
             <button
@@ -269,7 +271,7 @@ const deleteClass = async (classId) => {
               <span className="font-medium">Available Sections ({allSections.length})</span>
               {showSections ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
             </button>
-            
+
             {showSections && (
               <div className="divide-y divide-gray-200 max-h-60 overflow-y-auto">
                 {allSections.length > 0 ? (
@@ -293,7 +295,7 @@ const deleteClass = async (classId) => {
           </div>
         </div>
       </div>
-       {error && <p className="text-red-500 text-sm">{error}</p>}
+      {error && <p className="text-red-500 text-sm">{error}</p>}
       {success && <p className="text-green-500 text-sm">{success}</p>}
 
       {/* Class-Section Assignment */}
@@ -301,24 +303,27 @@ const deleteClass = async (classId) => {
         <h2 className="text-xl font-semibold text-gray-800 mb-4">
           {editingId ? 'Edit Class Sections' : 'Assign Sections to Class'}
         </h2>
-        
+
         <div className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Select Class
             </label>
-            <select
-              value={className}
-              onChange={(e) => setClassName(e.target.value)}
-              className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">Select a class</option>
-              {[...Array(10)].map((_, i) => (
-                <option key={i+1} value={i+1}>Class {i+1}</option>
-              ))}
-              <option value="+1">Class +1</option>
-              <option value="+2">Class +2</option>
-            </select>
+            <Select value={className} onValueChange={setClassName}>
+              <SelectTrigger className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <SelectValue placeholder="Select a class" />
+              </SelectTrigger>
+
+              <SelectContent className="border-none shadow-md">
+                {[...Array(10)].map((_, i) => (
+                  <SelectItem key={i + 1} value={(i + 1).toString()}>
+                    Class {i + 1}
+                  </SelectItem>
+                ))}
+                <SelectItem value="+1">Class +1</SelectItem>
+                <SelectItem value="+2">Class +2</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {className && (
@@ -326,7 +331,7 @@ const deleteClass = async (classId) => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Select Sections for {className}
               </label>
-              
+
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                 {allSections.length > 0 ? (
                   allSections.sort().map(section => (
@@ -334,11 +339,10 @@ const deleteClass = async (classId) => {
                       key={section}
                       type="button"
                       onClick={() => toggleSection(section)}
-                      className={`h-10 rounded-md border flex items-center justify-center transition-colors ${
-                        selectedSections.includes(section)
+                      className={`h-10 rounded-md border flex items-center justify-center transition-colors ${selectedSections.includes(section)
                           ? 'bg-blue-100 border-blue-500 text-blue-800'
                           : 'border-gray-300 hover:bg-gray-50'
-                      }`}
+                        }`}
                     >
                       {section}
                     </button>
@@ -357,7 +361,7 @@ const deleteClass = async (classId) => {
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {selectedSections.sort().map(section => (
-                      <span 
+                      <span
                         key={section}
                         className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
                       >
@@ -374,9 +378,8 @@ const deleteClass = async (classId) => {
             <button
               onClick={saveClass}
               disabled={!className || selectedSections.length === 0}
-              className={`flex-1 h-10 flex items-center justify-center gap-2 ${
-                editingId ? 'bg-yellow-600 hover:bg-yellow-700' :  'bg-[#3D4577] hover:bg-[#3d4577e5]'
-              } text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors`}
+              className={`flex-1 h-10 flex items-center justify-center gap-2 ${editingId ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-[#3D4577] hover:bg-[#3d4577e5]'
+                } text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors`}
             >
               {editingId ? (
                 <>
@@ -434,8 +437,8 @@ const deleteClass = async (classId) => {
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1">
                         {cls.sections.map(section => (
-                          <span 
-                            key={section} 
+                          <span
+                            key={section}
                             className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs"
                           >
                             {section}

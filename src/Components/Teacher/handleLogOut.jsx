@@ -44,15 +44,7 @@ const handleLogout = async (setTeacherAuthenticated, navigate) => {
     if (result.isConfirmed) {
       await signOut(auth);
       setTeacherAuthenticated(false);
-      Swal.fire({
-        title: 'Logged Out!',
-        text: 'You have been successfully logged out.',
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false,
-      }).then(() => {
-        navigate('/teacher');
-      });
+      navigate('/teacher');
     }
   } catch (error) {
     console.error('Error logging out:', error);
