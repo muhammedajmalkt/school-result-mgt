@@ -1,10 +1,10 @@
-import { useContext, useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import { collection, getDocs, query, where } from "firebase/firestore"
-import { firestore } from "../../Firebase/config"
-import { Mycontext } from "../Context/Context"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
-import { MapPin, Phone, GraduationCap, BookOpen, Award, Users } from "lucide-react"
+import { useContext, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { firestore } from "../../Firebase/config";
+import { Mycontext } from "../Context/Context";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { MapPin, Phone, GraduationCap, BookOpen, Users } from "lucide-react";
 
 const Home = () => {
   const { result, setResult } = useContext(Mycontext);
@@ -13,6 +13,7 @@ const Home = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [exams, setExams] = useState([]);
+  const [allExamDocs, setAllExamDocs] = useState([]);
   const [loadingExams, setLoadingExams] = useState(true);
   const navigate = useNavigate();
 
@@ -21,20 +22,29 @@ const Home = () => {
       try {
         setLoadingExams(true);
         const examMarksSnapshot = await getDocs(collection(firestore, 'examMarks'));
-        const examsMap = new Map();
-        examMarksSnapshot.docs.forEach(doc => {
-          const data = doc.data();
-          if (data.examName && data.examId) {
-            examsMap.set(data.examName.toLowerCase(), {
-              id: data.examId,
-              name: data.examName
+
+        const allExams = examMarksSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setAllExamDocs(allExams);
+
+        const uniqueExams = [];
+        const seenNames = new Set();
+
+        allExams.forEach(exam => {
+          if (exam.examName && !seenNames.has(exam.examName)) {
+            seenNames.add(exam.examName);
+            uniqueExams.push({
+              name: exam.examName,
+              id: exam.id
             });
           }
         });
-        const uniqueExams = Array.from(examsMap.values()).sort((a, b) => 
-          a.name.localeCompare(b.name)
-        );
-        setExams(uniqueExams);
+
+        const sortedExams = uniqueExams.sort((a, b) => a.name.localeCompare(b.name));
+
+        setExams(sortedExams);
       } catch (error) {
         console.error('Error fetching exams:', error);
         setError('Failed to load exams. Please try again.');
@@ -49,7 +59,7 @@ const Home = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     if (!exam || !regNo) {
       setError('Please select an exam and enter a registration number.');
       setResult(null);
@@ -60,7 +70,7 @@ const Home = () => {
 
     try {
       const studentsSnapshot = await getDocs(collection(firestore, 'students'));
-      const student = studentsSnapshot.docs.find(doc => 
+      const student = studentsSnapshot.docs.find(doc =>
         doc.data().regNo === regNo || doc.data().registrationNumber === regNo
       );
 
@@ -71,37 +81,66 @@ const Home = () => {
       }
 
       const studentData = student.data();
-      
-      const examMarksQuery = query(
-        collection(firestore, 'examMarks'),
-        where('regNo', '==', regNo),
-        where('examId', '==', exam)
-      );
-      
-      const examMarksSnapshot = await getDocs(examMarksQuery);
-      
-      if (examMarksSnapshot.empty) {
+
+      const selectedExam = exams.find(e => e.id === exam);
+      if (!selectedExam) {
+        setError('Selected exam not found.');
+        setLoading(false);
+        return;
+      }
+
+      const matchingExams = allExamDocs.filter(e => e.examName === selectedExam.name);
+
+      let examMarksData = null;
+      for (const examDoc of matchingExams) {
+        const examMarksQuery = query(
+          collection(firestore, 'examMarks'),
+          where('regNo', '==', regNo),
+          where('examName', '==', selectedExam.name),
+          where('examId', '==', examDoc.examId)
+        );
+
+        const examMarksSnapshot = await getDocs(examMarksQuery);
+        if (!examMarksSnapshot.empty) {
+          examMarksData = examMarksSnapshot.docs[0].data();
+          break;
+        }
+      }
+
+      if (!examMarksData) {
         setError('No results found for this student and exam combination.');
         setLoading(false);
         return;
       }
 
-      const examMarksData = examMarksSnapshot.docs[0].data();
       const marks = examMarksData.subjects || [];
-      const maxMarks = marks.length * 5; 
-      const total = marks.reduce((sum, { score }) => score > 0 ? sum + score : sum, 0);
 
+      const total = marks.reduce((sum, { score, isOptional }) => {
+        if (isOptional) return sum;
+        if (typeof score === 'number') {
+          return score > 0 ? sum + score : sum;
+        }
+        if (!isNaN(score)) {
+          const numScore = parseFloat(score);
+          return numScore > 0 ? sum + numScore : sum;
+        }
+        return sum;
+      }, 0);
+
+      const compulsorySubjects = marks.filter(sub => !sub.isOptional);
+      const maxMarks = compulsorySubjects.length * 5;
       const percentage = maxMarks > 0 ? (total / maxMarks) * 100 : 0;
-    
+
       const resultData = {
         studentName: studentData.name || studentData.studentName || 'Unknown',
         regNo: regNo,
-        examName: exams.find(e => e.id === exam)?.name || examMarksData.examName || exam,
-        marks: marks, 
+        examName: selectedExam.name,
+        marks: marks,
         total: total,
         percentage: Number.parseFloat(percentage.toFixed(2)),
         studentData: studentData,
-        examData: examMarksData
+        examData: examMarksData,
+        stream: studentData.stream || null
       };
 
       sessionStorage.setItem("result", JSON.stringify(resultData));
@@ -129,13 +168,13 @@ const Home = () => {
 
   return (
     <>
-
-      <div className="min-h-screen flex flex-col relative overflow-y-scroll  scrollbar-hidden ">
-        {/* <div className="absolute inset-0  bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100"> */}
+      <div className="min-h-screen flex flex-col relative overflow-y-scroll scrollbar-hidden">
+        {/* Background gradient and decorative elements */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.1\'%3E%3Ccircle cx=\'30\' cy=\'30\' r=\'2\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
           </div>
+          {/* Decorative animated blobs */}
           <div className="absolute top-20 left-10 w-20 h-20 bg-blue-400/20 rounded-full blur-xl animate-pulse"></div>
           <div className="absolute top-40 right-20 w-32 h-32 bg-indigo-400/20 rounded-full blur-xl animate-pulse delay-1000"></div>
           <div className="absolute bottom-40 left-20 w-24 h-24 bg-purple-400/20 rounded-full blur-xl animate-pulse delay-2000"></div>
@@ -143,17 +182,17 @@ const Home = () => {
         </div>
 
         {/* Header */}
-        <div className="relative lg:top-3 ">
+        <div className="relative lg:top-3">
           <div className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12  items-center justify-center ">
+                <div className="w-12 h-12 items-center justify-center">
                   <img
                     src="/Yaseen Logo.png"
                     alt="School Logo"
                     className="w-10 h-10 ml-2 object-contain"
-                  />            
-                      </div>
+                  />
+                </div>
                 <div>
                   <h1 className="text-xl font-bold text-white/90">RAZA-UL ULOOM ISLAMIA</h1>
                   <p className="text-blue-200 text-sm">Higher Secondary School</p>
@@ -170,10 +209,10 @@ const Home = () => {
         </div>
 
         {/* Main Content */}
-        <div className="relative z-10 flex-grow flex items-center justify-center px-4 py-8 ">
+        <div className="relative z-10 flex-grow flex items-center justify-center px-4 py-8">
           <div className="w-full max-w-6xl mx-auto">
-            <div className="grid lg:grid-cols-2 gap-12 items-center ">
-              
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+
               {/* Left Side - Information */}
               <div className="text-center lg:text-left lg:flex flex-col hidden">
                 <div className="mb-8">
@@ -204,7 +243,7 @@ const Home = () => {
                   <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                        <GraduationCap   className="w-5 h-5 text-purple-400" />
+                        <GraduationCap className="w-5 h-5 text-purple-400" />
                       </div>
                       <div>
                         <p className="text-white font-semibold">98%</p>
@@ -236,17 +275,17 @@ const Home = () => {
                           value={exam}
                           disabled={loadingExams || exams.length === 0}
                         >
-                          <SelectTrigger className="w-full h-12 bgs-white/10 border-white/20 text-white backdrop-blur-md hover:bg-white/20 transition-all ">
-                            <SelectValue 
-                              placeholder={ loadingExams ? "Loading examinations..." : exams.length === 0 ? "No examinations available" : "Select an examination" } 
+                          <SelectTrigger className="w-full h-12 bg-white/60 border-white/20 text-black backdrop-blur-md hover:bg-white/20 transition-all">
+                            <SelectValue
+                              placeholder={loadingExams ? "Loading examinations..." : exams.length === 0 ? "No examinations available" : "Select an examination"}
                             />
                           </SelectTrigger>
                           <SelectContent className="">
                             {exams.map((examItem) => (
-                              <SelectItem 
-                                key={examItem.id} 
+                              <SelectItem
+                                key={examItem.id}
                                 value={examItem.id}
-                                className=" hover:bg-slate-700  text-black "
+                                className="hover:bg-slate-700 text-black "
                               >
                                 {examItem.name}
                               </SelectItem>
@@ -300,18 +339,18 @@ const Home = () => {
         </div>
       </div>
 
-            <footer className="text-center py-8 bg-gradient-to-br from-gray-900 to-blue-900 text-white/90 px-4">
-       <p className="text-sm font-bold">RAZA-UL ULOOM ISLAMIA HIGHER SECONDARY SCHOOL</p>
-         <div className="flex lg:items-center justify-center lg:text-sm mt-1 text-xs items-start">
-           <MapPin className="w-4 h-4 mr-1" />
-           <span>Parade Ground, Old City, Poonch, Jammu and Kashmir 185101</span>
-         </div>
-         <div className="flex items-center justify-center text-sm mt-1">
-           <Phone className="w-4 h-4 mr-1" />
-           <span>Phone:+91 072980 10127</span>
-         </div>
-         <p className="text-sm mt-2 text-gray-400">© 2025 RAZA-UL ULOOM ISLAMIA HIGHER SECONDARY SCHOOL. All rights reserved.</p>
-       </footer>
+      <footer className="text-center py-8 bg-gradient-to-br from-gray-900 to-blue-900 text-white/90 px-4">
+        <p className="text-sm font-bold">RAZA-UL ULOOM ISLAMIA HIGHER SECONDARY SCHOOL</p>
+        <div className="flex lg:items-center justify-center lg:text-sm mt-1 text-xs items-start">
+          <MapPin className="w-4 h-4 mr-1" />
+          <span>Parade Ground, Old City, Poonch, Jammu and Kashmir 185101</span>
+        </div>
+        <div className="flex items-center justify-center text-sm mt-1">
+          <Phone className="w-4 h-4 mr-1" />
+          <span>Phone:+91 072980 10127</span>
+        </div>
+        <p className="text-sm mt-2 text-gray-400">© 2025 RAZA-UL ULOOM ISLAMIA HIGHER SECONDARY SCHOOL. All rights reserved.</p>
+      </footer>
     </>
   );
 };

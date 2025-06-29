@@ -42,8 +42,6 @@ const AdminLogin = () => {
     }
 
     try {
-      // Firebase Authentication
-      // Firebase Authentication
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
@@ -69,7 +67,6 @@ const AdminLogin = () => {
       }
 
       setSuccess('Login successful!');
-      toast.success('Welcome, Admin!');
       toast.success('Welcome, Admin!');
       setTimeout(() => {
         navigate('/admin/dashboard');

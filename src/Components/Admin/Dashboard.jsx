@@ -24,13 +24,21 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   // Helper function to calculate grade based on average score
-  const calculateGrade = (avgScore) => {
-    if (avgScore >= 90) return 'A+';
-    if (avgScore >= 80) return 'A';
-    if (avgScore >= 70) return 'B+';
-    if (avgScore >= 60) return 'B';
-    if (avgScore >= 50) return 'C+';
-    return 'C';
+  const getGrade = (score) => {
+    if (score >= 4.5) return 'A+';
+    if (score >= 4.0) return 'A';
+    if (score >= 3.5) return 'B+';
+    if (score >= 3.0) return 'B';
+    if (score >= 2.5) return 'C+';
+    if (score >= 2.0) return 'C';
+    if (score >= 1.5) return 'D';
+    if (score < 1.5) return 'F';
+    return 'AB';
+  };
+
+  // Check if student has any failed subject
+  const hasFailedSubject = (subjects = []) => {
+    return subjects.some(subject => subject.score === "AB" || (typeof subject.score === 'number' && subject.score < 1.5));
   };
 
   useEffect(() => {
@@ -48,18 +56,27 @@ const Dashboard = () => {
         const totalStudents = studentsSnapshot.docs.length;
         const examsData = examsSnapshot.docs.map(doc => ({
           id: doc.id,
-          examName: doc.data().name || 'Unknown Exam', // Use 'name' instead of 'examName'
+          examName: doc.data().name || 'Unknown Exam',
         }));
         const totalExams = examsData.length;
 
         // Create lookup maps for students (using regNo) and exams
-        const studentMap = new Map(studentsSnapshot.docs.map(doc => [doc.data().regNo, doc.data().name || 'Unknown Student']));
+        const studentMap = new Map();
+        studentsSnapshot.docs.forEach(doc => {
+          const studentData = doc.data();
+          studentMap.set(studentData.regNo, {
+            name: studentData.name || 'Unknown Student',
+            className: studentData.className || 'N/A',
+            section: studentData.section || 'N/A'
+          });
+        });
+
         const examMap = new Map(examsData.map(exam => [exam.id, exam.examName]));
 
         let resultsPublished = 0;
         let totalScores = 0;
         let passingResults = 0;
-        const gradeCounts = { 'A+': 0, A: 0, 'B+': 0, B: 0, 'C+': 0, C: 0 };
+        const gradeCounts = { 'A+': 0, A: 0, 'B+': 0, B: 0, 'C+': 0, C: 0, D: 0, F: 0, AB: 0 };
         const monthlyData = {};
         const recentResultsData = [];
 
@@ -67,23 +84,38 @@ const Dashboard = () => {
         examMarksSnapshot.forEach((resultDoc) => {
           const result = resultDoc.data();
           const regNo = result.regNo;
-          const studentName = studentMap.get(regNo) || 'Unknown Student';
+          const studentInfo = studentMap.get(regNo) || {
+            name: 'Unknown Student',
+            className: 'N/A',
+            section: 'N/A'
+          };
 
-          const totalScore = result.subjects?.reduce((sum, subject) => sum + (subject.score || 0), 0) || 0;
-          const avgScore = result.subjects?.length ? totalScore / result.subjects.length : 0;
-          const grade = calculateGrade(avgScore);
+          // Calculate average score and grade
+          const validScores = (result.subjects || []).filter(subject => 
+            typeof subject.score === 'number' && subject.score > 0
+          );
+          
+          const totalScore = validScores.reduce((sum, subject) => sum + subject.score, 0);
+          const avgScore = validScores.length > 0 ? totalScore / validScores.length : 0;
+          
+          const hasFailed = hasFailedSubject(result.subjects || []);
+          const grade = hasFailed ? 'F' : getGrade(avgScore);
+
+          // Calculate percentage
+          const maxPossibleScore = (result.subjects || []).length * 5;
+          const percentage = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 100 : 0;
 
           resultsPublished++;
-          totalScores += avgScore;
-          if (avgScore >= 60) passingResults++;
+          totalScores += parseFloat(percentage);
+          if (!hasFailed && grade !== 'AB') passingResults++;
 
           // Update grade counts
-          gradeCounts[grade]++;
+          gradeCounts[grade] = (gradeCounts[grade] || 0) + 1;
 
           // Update monthly data
           const date = result.date
-            ? new Date(result.date) // Parse ISO string
-            : new Date(); // Fallback to current date
+            ? new Date(result.date)
+            : new Date();
           const month = date.toLocaleString('en-US', { month: 'short' });
           monthlyData[month] = monthlyData[month] || { published: 0, pending: 0 };
           monthlyData[month].published++;
@@ -92,16 +124,19 @@ const Dashboard = () => {
           if (recentResultsData.length < 10) {
             recentResultsData.push({
               id: resultDoc.id,
-              student: studentName,
+              student: studentInfo.name,
+              className: studentInfo.className,
+              section: studentInfo.section,
               course: examMap.get(result.examId) || result.examName || 'Unknown Exam',
               grade,
-              score: avgScore.toFixed(1),
+              score: percentage.toFixed(1),
               date: date.toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric',
               }),
               examId: result.examId || '',
+              hasFailed
             });
           }
         });
@@ -126,11 +161,15 @@ const Dashboard = () => {
               ? '#F59E0B'
               : grade === 'C+'
               ? '#EF4444'
-              : '#6B7280',
+              : grade === 'C'
+              ? '#EC4899'
+              : grade === 'D'
+              ? '#F97316'
+              : '#6B7280', 
         }));
 
         // Prepare monthly results data
-        const months = [  'Aug', 'Dec','Mar',];
+        const months = ['Aug', 'Dec', 'Mar'];
         const monthlyResultsData = months.map((month) => ({
           month,
           published: monthlyData[month]?.published || 0,
@@ -148,7 +187,18 @@ const Dashboard = () => {
         setGradeDistribution(gradeDistributionData);
         setMonthlyResults(monthlyResultsData);
         setRecentResults(recentResultsData.sort((a, b) => new Date(b.date) - new Date(a.date)));
-        setExams(examsData);
+        
+        // Get unique exams by name
+        const uniqueExams = [];
+        const examNames = new Set();
+        examsData.forEach(exam => {
+          if (!examNames.has(exam.examName)) {
+            examNames.add(exam.examName);
+            uniqueExams.push(exam);
+          }
+        });
+        setExams(uniqueExams);
+        
         setLoading(false);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
@@ -165,11 +215,11 @@ const Dashboard = () => {
     (result) =>
       result.student.toLowerCase().includes(searchTerm.toLowerCase()) &&
       (filterGrade === 'all' || result.grade === filterGrade) &&
-      (filterExam === 'all' || result.examId === filterExam)
+      (filterExam === 'all' || result.course === filterExam)
   );
 
   const StatCard = ({ icon: Icon, title, value, subtitle, trend, color = 'blue' }) => (
-    <div className="bg-white rounded-xl shadow p-6 border border-gray-100 hover:shadow-lg transition-shadow duration-300">
+    <div className={`bg-white rounded-xl shadow p-6 border border-gray-100 hover:shadow-lg transition-shadow duration-300`}>
       <div className="flex items-center justify-between mb-4">
         <div className={`p-3 rounded-lg bg-${color}-100`}>
           <Icon className={`w-6 h-6 text-${color}-600`} />
@@ -254,7 +304,7 @@ const Dashboard = () => {
                 title="Total Students"
                 value={dashboardStats.totalStudents.toLocaleString()}
                 subtitle="Active enrollments"
-                trend={12} // Placeholder
+                trend={12}
                 color="blue"
               />
               <StatCard
@@ -262,7 +312,7 @@ const Dashboard = () => {
                 title="Results Published"
                 value={dashboardStats.resultsPublished}
                 subtitle={`${dashboardStats.totalStudents ? ((dashboardStats.resultsPublished / (dashboardStats.totalStudents * exams.length)) * 100).toFixed(1) : 0}% of total`}
-                trend={8} // Placeholder
+                trend={8}
                 color="green"
               />
               <StatCard
@@ -277,15 +327,15 @@ const Dashboard = () => {
                 title="Average Score"
                 value={`${dashboardStats.averageScore}%`}
                 subtitle="Class performance"
-                trend={3} // Placeholder
+                trend={3}
                 color="purple"
               />
               <StatCard
                 icon={BookOpen}
                 title="Pass Rate"
                 value={`${dashboardStats.passRate}%`}
-                subtitle="Above 60% score"
-                trend={5} // Placeholder
+                subtitle="Above passing grade"
+                trend={5}
                 color="emerald"
               />
             </div>
@@ -297,6 +347,7 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold text-gray-900">Monthly Results Trend</h3>
                   <button className="text-gray-400 hover:text-gray-600">
+                    <Download className="w-5 h-5" />
                   </button>
                 </div>
                 <ResponsiveContainer width="100%" height={300}>
@@ -316,6 +367,7 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold text-gray-900">Grade Distribution</h3>
                   <button className="text-gray-400 hover:text-gray-600">
+                    <Download className="w-5 h-5" />
                   </button>
                 </div>
                 <ResponsiveContainer width="100%" height={300}>
@@ -368,7 +420,7 @@ const Dashboard = () => {
               >
                 <option value="all">All Exams</option>
                 {exams.map((exam) => (
-                  <option key={exam.id} value={exam.id}>
+                  <option key={exam.id} value={exam.examName}>
                     {exam.examName}
                   </option>
                 ))}
@@ -377,17 +429,20 @@ const Dashboard = () => {
 
             {/* Recent Results Table */}
             <div className="bg-white rounded-md shadow overflow-hidden border">
-              <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 ">
-                <h3 className="text-lg font-semibold text-gray-900 ">Recent Results</h3>
+              <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h3 className="text-lg font-semibold text-gray-900">Recent Results</h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-[#3d4577]">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">Student</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">Class</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">Section</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">Exam</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">Grade</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">Score</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">Status</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">Date</th>
                     </tr>
                   </thead>
@@ -404,21 +459,36 @@ const Dashboard = () => {
                             </div>
                           </div>
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{result.className}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center">{result.section}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{result.course}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              result.grade.startsWith('A')
+                              result.grade === 'A+'
                                 ? 'bg-green-100 text-green-800'
-                                : result.grade.startsWith('B')
+                                : ['A', 'B+', 'B'].includes(result.grade)
                                 ? 'bg-blue-100 text-blue-800'
-                                : 'bg-yellow-100 text-yellow-800'
+                                : ['C+', 'C', 'D'].includes(result.grade)
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
                             }`}
                           >
                             {result.grade}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{result.score}%</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              result.hasFailed
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-green-100 text-green-800'
+                            }`}
+                          >
+                            {result.hasFailed ? 'Failed' : 'Passed'}
+                          </span>
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{result.date}</td>
                       </tr>
                     ))}

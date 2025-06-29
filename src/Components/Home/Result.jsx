@@ -130,11 +130,11 @@ console.log(enhancedResult);
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600 font-medium">Name:</span>
-                <span className="font-bold text-gray-800">{enhancedResult.studentName}</span>
+                <span className="font-bold text-gray-800">{enhancedResult.studentName.toUpperCase()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600 font-medium">Gender:</span>
-                <span className="font-bold text-gray-800">{enhancedResult.gender}</span>
+                <span className="font-bold text-gray-800">{enhancedResult.gender?.toUpperCase()}</span>
               </div>
             </div>
           </div>
